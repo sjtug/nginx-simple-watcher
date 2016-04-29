@@ -6,7 +6,7 @@ A zero-extra-dependency C++14 nginx server watcher providing CPU usage, mem usag
 Use any compiler that has support for C++14.
 
 ```
-g++ -std=c++14 watcher.cpp -o watcher -pthread
+g++ -std=c++14 -O2 watcher.cpp -o watcher -pthread
 ```
 
 ## Usage
