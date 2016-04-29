@@ -18,6 +18,7 @@
 #include <cmath>
 #include <iomanip>
 #include <sstream>
+#include "json.hpp"
 
 namespace Infos
 {
@@ -237,89 +238,37 @@ string to_string(const chrono::system_clock::time_point &tp)
 
 void printJSON(std::ofstream& of, const Status& sta)
 {
-    of << "{" << endl;
-
-    of << "\"cpu\":" << endl;
-    of << "{" << endl;
-
-    of << "\"time\":" << endl;
-    of << "[" << endl;
-    size_t cnt = 0;
+    using json=nlohmann::json;
+    json j;
+    j["cpu"]["time"] = json::array();
     for (const auto & item: sta.cpuPecents)
-    {
-        of << "\"" << to_string(item.first) << "\"";
-        if (++cnt == sta.cpuPecents.size())
-            of << endl;
-        else
-            of << ",";
-    }
-    of << "]," << endl;
+        j["cpu"]["time"].push_back(to_string(item.first));
 
-    of << "\"rate\":" << endl;
-    of << "[" << endl;
-    cnt = 0;
+    j["cpu"]["rate"] = json::array();
     for (const auto & item: sta.cpuPecents)
-    {
-        of << item.second;
-        if (++cnt == sta.cpuPecents.size())
-            of << endl;
-        else
-            of << ",";
-    }
-    of << "]" << endl; //rate
-    of << "}," << endl; //cpu
+        j["cpu"]["rate"].push_back(item.second);
 
-    of << "\"mem\":" << endl;
-    of << "{" << endl;
 
-    of << "\"time\":" << endl;
-    of << "[" << endl;
-    cnt = 0;
+    j["mem"]["time"] = json::array();
     for (const auto & item: sta.memInfos)
-    {
-        of <<  "\"" << to_string(item.first) << "\"";
-        if (++cnt == sta.memInfos.size())
-            of << endl;
-        else
-            of << ",";
-    }
-    of << "]," << endl;
+        j["mem"]["time"].push_back(to_string(item.first));
 
-    of << "\"rate\":" << endl;
-    of << "[" << endl;
-    cnt = 0;
+    j["mem"]["rate"] = json::array();
     for (const auto & item: sta.memInfos)
-    {
-        of << item.second.used / 1024 / 1024;
-        if (++cnt == sta.memInfos.size())
-            of << endl;
-        else
-            of << ",";
-    }
-    of << "]" << endl; //rate
-    of << "}," << endl; //mem
+        j["mem"]["rate"].push_back(item.second.used / 1024 / 1024);
 
-    of << "\"nginx\":" << endl;
-    of << "{" << endl;
-
-    of << "\"data\":" << endl;
-    of << "[" << endl;
-    cnt = 0;
+    j["nginx"]["data"] = json::array();
     for (const auto & item: sta.nginxInfos)
     {
-        of << "{" << endl;
-        of << "\"path\": \"" << item.second.path << "\"," << endl;
-        of << "\"method\": \"" << item.second.type << "\"," << endl;
-        of << "\"status\": "<<item.second.status << "," << endl;
-        of << "\"time\": \"" << to_string(item.first) << "\"" << endl;
-        of << "}";
-        if (++cnt == sta.nginxInfos.size())
-            of << endl;
-        else
-            of << "," << endl;
+        json jj = 
+        {
+            { "path", item.second.path },
+            { "method", item.second.type },
+            {"status", item.second.status },
+            { "time", to_string(item.first) }
+        };
+        j["nginx"]["data"].push_back(jj);
     }
-    of << "]" << endl; //data
-    of << "}," << endl; //nginx
 
     std::vector< pair<string, long long > > v;
     for (const auto & item:sta.nginxDirInfo)
@@ -329,23 +278,12 @@ void printJSON(std::ofstream& of, const Status& sta)
                 return v1.second > v2.second;
                 });
 
-    of << "\"hotDir\":" << endl;
-    of << "[" << endl;
-    cnt = 0;
+    j["hotDir"] = json::array();
     for (const auto &item : v)
     {
-        of << "{" << endl;
-        of << "\"dir\": \""<< item.first << "\"," << endl;
-        of << "\"count\": \"" << item.second << "\"" << endl;
-        of << "}";
-        if (++cnt == v.size())
-            of << endl;
-        else
-            of << "," << endl;
+        j["hotDir"].push_back({ {"dir", item.first}, {"count", item.second}});
     }
-    of << "]" << endl; //hotDir
-
-    of << "}" << endl;
+    of << j.dump(4);
 }
 
 int main(int argc, char* argv[])
@@ -374,6 +312,8 @@ int main(int argc, char* argv[])
             s.checkAndAddNginxInfos(np.parse(item));
         std::ofstream of(argv[3]);
         printJSON(of, s);
+        of.flush();
+        of.close();
 
         cout << "Iteration " << cnt << "  end. Sleep for " << atoi(argv[2]) << "s" << endl;
         this_thread::sleep_for(chrono::seconds(std::atoi(argv[2])));
