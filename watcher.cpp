@@ -183,7 +183,7 @@ class Status
         typedef std::chrono::system_clock::time_point ClockT;
         //! Change the maximum entries here!
         //! The actual size varies between MAXITEM/2 and MAXITEM
-        const std::size_t MAXITEM = 10;
+        const std::size_t MAXITEM = 30000;
         template<typename T>
             bool clearExceededItems(T &m)
             {
