@@ -181,16 +181,21 @@ class Status
 {
     private:
         typedef std::chrono::system_clock::time_point ClockT;
-        const std::size_t MAXITEM = 30000;
+        //! Change the maximum entries here!
+        //! The actual size varies between MAXITEM/2 and MAXITEM
+        const std::size_t MAXITEM = 10;
         template<typename T>
-            void clearExceededItems(T &m)
+            bool clearExceededItems(T &m)
             {
                 if (m.size() > MAXITEM)
                 {
                     while (m.size() > MAXITEM / 2)
                         m.erase(m.begin());
+                    return true;
                 }
+                return false;
             }
+
     public:
 
         std::map<ClockT, double> cpuPecents;
@@ -199,26 +204,48 @@ class Status
 
         std::map<std::string, long long> nginxDirInfo;
 
-        void checkAndAddCPU(const double d)
+        void updateDirInfoFromItem(const NginxLogEntry &e)
         {
-            clearExceededItems(cpuPecents);
-            cpuPecents.insert(std::make_pair(std::chrono::system_clock::now(), d));
-        }
-
-        void checkAndAddMem(const Infos::MemInfoGetter::MemInfo &i)
-        {
-            clearExceededItems(memInfos);
-            memInfos.insert(std::make_pair(std::chrono::system_clock::now(), i));
-        }
-
-        void checkAndAddNginxInfos(const NginxLogEntry& e)
-        {
-            clearExceededItems(nginxInfos);
-            nginxInfos.insert(make_pair(e.time_point, e));
             if (e.status == 200 || e.status == 304)
                 for (size_t i=0; i<e.path.size(); ++i)
                     if (e.path[i] == '/')
                         nginxDirInfo[e.path.substr(0,i+1)]++;
+        }
+
+    public:
+
+        void checkAndAddCPU(const double d)
+        {
+            cpuPecents.insert(std::make_pair(std::chrono::system_clock::now(), d));
+            clearExceededItems(cpuPecents);
+        }
+
+        void checkAndAddMem(const Infos::MemInfoGetter::MemInfo &i)
+        {
+            memInfos.insert(std::make_pair(std::chrono::system_clock::now(), i));
+            clearExceededItems(memInfos);
+        }
+
+        void checkAndAddNginxInfos(const NginxLogEntry& e)
+        {
+            nginxInfos.insert(make_pair(e.time_point, e));
+            updateDirInfoFromItem(e);
+            if (clearExceededItems(nginxInfos))
+            {
+                nginxDirInfo.clear();
+                for (const auto &item: nginxInfos)
+                    updateDirInfoFromItem(item.second);
+            }
+        }
+
+        std::string stat()
+        {
+            std::stringstream ss;
+            ss << "CPU Entry:" << cpuPecents.size() <<
+                "\tMem Entry:" << memInfos.size() <<
+                "\tNginxLogInfo Entry:" << nginxInfos.size() <<
+                "\tNginxDirInfo Entry:" << nginxDirInfo.size();
+            return ss.str();
         }
 };
 
@@ -286,6 +313,11 @@ void printJSON(std::ofstream& of, const Status& sta)
     of << j.dump(4);
 }
 
+inline std::string currentTime()
+{
+    return to_string(chrono::system_clock::now());
+}
+
 int main(int argc, char* argv[])
 {
     if (argc != 4)
@@ -304,7 +336,8 @@ int main(int argc, char* argv[])
     Status s;
     for (long long cnt = 0;;++cnt)
     {
-        cout << "Iteration " << cnt << "  Begin" << endl;
+        cout << "[" << currentTime() << "]" <<
+            "Iteration " << cnt << "  Begin" << endl;
         if (!isnan(cg.getCurrentValue())) s.checkAndAddCPU(cg.getCurrentValue());
         s.checkAndAddMem(mg.getMemInfo());
         auto newEntrys = nl.getIncrLines();
@@ -315,7 +348,9 @@ int main(int argc, char* argv[])
         of.flush();
         of.close();
 
-        cout << "Iteration " << cnt << "  end. Sleep for " << atoi(argv[2]) << "s" << endl;
+        cout << s.stat() << endl;
+        cout << "[" << currentTime() << "]" <<
+            "Iteration " << cnt << "  end. Sleep for " << atoi(argv[2]) << "s" << endl;
         this_thread::sleep_for(chrono::seconds(std::atoi(argv[2])));
     }
 
