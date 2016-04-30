@@ -73,5 +73,24 @@ Then copy `status.html`, `updatedata.js`, `status.css`, `psd3.min.css`, `psd3.mi
 }
 ```
 
-
 Modify `NginxLogEntryParser` to meet your nginx access log format!
+
+## License
+This project is under GPLv3 license, see `LICENSE` for details.
+
+`json.hpp` is from https://github.com/nlohmann/json, which is licensed under the MIT license.
+
+`psd3.min.css` and `psd3.min.js` are from https://github.com/pshivale/psd3, which is also licensed under MIT license.
+
+> This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+> This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+
+> You should have received a copy of the GNU General Public License
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
