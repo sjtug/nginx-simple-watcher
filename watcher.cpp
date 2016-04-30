@@ -318,7 +318,8 @@ void printJSON(std::ofstream& of, const Status& sta)
         v.push_back(item);
     sort(v.begin(), v.end(), [](const auto& v1, const auto& v2)
                 {
-                return v1.second > v2.second;
+                if (v1.second != v2.second) return v1.second > v2.second;
+                else return v1.first.length() < v2.first.length();
                 });
 
     j["hotDir"] = json::array({});
