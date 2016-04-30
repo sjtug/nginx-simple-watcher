@@ -18,29 +18,21 @@ g++ -std=c++14 -O2 watcher.cpp -o watcher -pthread
 ```json
 {
     "cpu":
-    {
-        "time":
-            [
-                "time_1",
-                "time_2"
-            ],
-        "rate":
-            [
-                2.3,
-                29.2
-            ]
-    },
+    [
+        ["time_1", 10.1],
+        ["time_2", 29]
+    ],
     "mem":
     {
-        "time":
+        "realUsed":
             [
-                "time_1",
-                "time_2"
+                ["time_1", 1234],
+                ["time_2", 1300]
             ],
-            "rate":
+        "used":
                 [
-                    1022,
-                    1122
+                    ["time_1", 2300],
+                    ["time_2", 2400]
                 ]
     },
     "nginx":
@@ -58,8 +50,16 @@ g++ -std=c++14 -O2 watcher.cpp -o watcher -pthread
     "hotDir":
     [
         {
-            "dir": "/test/",
-            "count": 2
+            "count": 22,
+            "name": "/",
+            "drilldown":
+                [
+                    {
+                        "count": 11,
+                        "name": "archlinux/",
+                        "drilldown": []
+                    }
+                ]
         }
     ]
 }

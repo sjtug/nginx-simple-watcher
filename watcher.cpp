@@ -18,6 +18,7 @@
 #include <cmath>
 #include <iomanip>
 #include <sstream>
+#include <cassert>
 #include "json.hpp"
 
 namespace Infos
@@ -35,7 +36,26 @@ namespace Infos
             unsigned long long getUsed()
             {
                 sysinfo(&memInfo);
-                return (memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit;
+                return 
+                    (memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit;
+            }
+
+            unsigned long long getRealUsed()
+            {
+                std::ifstream is("/proc/meminfo");
+                unsigned long long res = getUsed();
+                while (!is.eof())
+                {
+                    std::string fieldname;
+                    is >> fieldname;
+                    if (fieldname == "Cached:")
+                    {
+                        unsigned long long tmp;
+                        is >> tmp;
+                        return res - tmp*1024;
+                    }
+                }
+                return -1;
             }
 
             double getLoad()
@@ -47,12 +67,12 @@ namespace Infos
         public:
             struct MemInfo
             {
-                unsigned long long tot, used;
+                unsigned long long tot, used, realUsed;
                 double load;
             };
             MemInfo getMemInfo()
             {
-                return MemInfo { getTot(), getUsed(), getLoad() };
+                return MemInfo { getTot(), getUsed(), getRealUsed(), getLoad() };
             }
     };
 
@@ -74,7 +94,7 @@ namespace Infos
                 FILE* file;
                 unsigned long long totalUser, totalUserLow, totalSys, totalIdle, total;
                 using namespace std::chrono;
-                std::this_thread::sleep_for(300ms);
+                std::this_thread::sleep_for(500ms);
                 file = fopen("/proc/stat", "r");
                 fscanf(file, "cpu %llu %llu %llu %llu", &totalUser, &totalUserLow,
                             &totalSys, &totalIdle);
@@ -206,7 +226,7 @@ class Status
 
         void updateDirInfoFromItem(const NginxLogEntry &e)
         {
-            if (e.status == 200 || e.status == 304)
+            if (e.path[0]=='/' && (e.status == 200 || e.status == 304))
                 for (size_t i=0; i<e.path.size(); ++i)
                     if (e.path[i] == '/')
                         nginxDirInfo[e.path.substr(0,i+1)]++;
@@ -267,22 +287,18 @@ void printJSON(std::ofstream& of, const Status& sta)
 {
     using json=nlohmann::json;
     json j;
-    j["cpu"]["time"] = json::array();
+    j["cpu"] = json::array();
     for (const auto & item: sta.cpuPecents)
-        j["cpu"]["time"].push_back(to_string(item.first));
+        j["cpu"].push_back(json::array({to_string(item.first), item.second}));
 
-    j["cpu"]["rate"] = json::array();
-    for (const auto & item: sta.cpuPecents)
-        j["cpu"]["rate"].push_back(item.second);
-
-
-    j["mem"]["time"] = json::array();
     for (const auto & item: sta.memInfos)
-        j["mem"]["time"].push_back(to_string(item.first));
+    {
+        j["mem"]["used"].push_back(json::array({to_string(item.first), 
+                        item.second.used / 1024 / 1024}));
+        j["mem"]["realUsed"].push_back(json::array({to_string(item.first),
+                        item.second.realUsed / 1024 / 1024}));
+    }
 
-    j["mem"]["rate"] = json::array();
-    for (const auto & item: sta.memInfos)
-        j["mem"]["rate"].push_back(item.second.used / 1024 / 1024);
 
     j["nginx"]["data"] = json::array();
     for (const auto & item: sta.nginxInfos)
@@ -305,10 +321,35 @@ void printJSON(std::ofstream& of, const Status& sta)
                 return v1.second > v2.second;
                 });
 
-    j["hotDir"] = json::array();
+    j["hotDir"] = json::array({});
     for (const auto &item : v)
     {
-        j["hotDir"].push_back({ {"dir", item.first}, {"count", item.second}});
+        json *cur = &j["hotDir"];
+        int laststart = -1;
+        for (size_t i=0; i<item.first.size(); ++i)
+        {
+            if (item.first[i] == '/')
+                if (i != item.first.size() - 1)
+                {
+                    auto it = std::find_if(cur->begin(), 
+                                cur->end(),
+                                [&](const json& ch)
+                                {
+                                return ch["name"] == item.first.substr(laststart+1, i-laststart);
+                                });
+                    assert(it != cur->end());
+                    cur = &((*it)["drilldown"]);
+                    laststart = i;
+                }
+            else
+            {
+                std::string name = item.first.substr(laststart + 1);
+                if (*name.rbegin() != '/') name += "/";
+                cur->push_back(json({{"name", item.first.substr(laststart+1)}, {"count", item.second},
+                                {"drilldown", json::array({})}
+                                }));
+            }
+        }
     }
     of << j.dump(4);
 }
