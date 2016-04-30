@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+        <title>Server Status</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+        <link rel="stylesheet" href="status.css">
+        <link rel="stylesheet" href="psd3.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/4.2.4/highcharts.js"></script>
+    </head>
+    <body>
+        <div style="width: 960px" id="container">
+            <h1>Server Status</h1>
+            <p id="lastupdate">
+                Last update:
+                <span id="lastupdatetime"></span>
+            </p>
+            <div id="cpu">
+                <div id="cpu-content">
+                    <div id="cpuChart" width="800px" height="300px"></div>
+                </div>
+            </div>
+            <div id="mem">
+                <div id="mem-content">
+                    <div id="memChart" width="800px" height="300px"></div>
+                </div>
+            </div>
+            <div id="hotdir">
+                <div id="hotdir-content">
+                </div>
+            </div>
+
+            <div id="nginxlog">
+                <h2>Nginx recent log</h2>
+                <div id="nginxlog-content">
+                    <input class="search" placeholder="Search" />
+                    <button class="sort" data-sort="path">
+                        Sort by path
+                    </button>
+                    <button class="sort" data-sort="time">
+                        Sort by time
+                    </button>
+                    <table class="pure-table-striped" style="width: 100%">
+                        <tbody class="list">
+                            <tr id="nginxlog-item">
+                                <td class="method"></td>
+                                <td class="path"></td>
+                                <td class="status"></td>
+                                <td class="time"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+
+                    <div class="pure-menu pure-menu-horizontal">
+                        <ul class="pagination pure-menu-list">
+                            <li class="pure-menu-item"></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/1.2.0/list.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/list.pagination.js/0.1.1/list.pagination.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.16/d3.min.js"></script>
+        <script src="psd3.min.js"></script>
+        <script src="updatedata.js"></script>
+    </body>
+</html>

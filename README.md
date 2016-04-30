@@ -1,6 +1,8 @@
 #Nginx-Simple-Watcher
 A zero-extra-dependency C++14 nginx server watcher providing CPU usage, mem usage, latest nginx logs and hottest directories, all in JSON format.
 
+A simple static web frontend is also provided.
+
 *Linux3.2+ only.*
 ## Compile
 Use any compiler that has support for C++14.
@@ -13,6 +15,8 @@ g++ -std=c++14 -O2 watcher.cpp -o watcher -pthread
 ```
 ./watcher nginx_access_log_path sleep_second output_json_path
 ```
+
+Then copy `status.html`, `updatedata.js`, `status.css`, `psd3.min.css`, `psd3.min.js` to the same directory as the json's.
 
 ### Output Format
 ```json
