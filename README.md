@@ -18,7 +18,11 @@ g++ -std=c++14 -O2 watcher.cpp -o watcher -pthread
 
 Then copy `status.html`, `updatedata.js`, `status.css`, `psd3.min.css`, `psd3.min.js` to the same directory as the json's.
 
-### Output Format
+## Screenshot
+
+![Screenshot](https://github.com/htfy96/nginx-simple-watcher/raw/master/screenshot.png)
+
+## Output Format
 ```json
 {
     "cpu":
