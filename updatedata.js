@@ -41,12 +41,15 @@ function updateData() {
                 text : "Hottest Directories",
                 pos: "top"
             },
+            tooltip: function(d) {
+                return d.name + ": " + d.count + "times";
+            },
             label: function(d) {
-                console.log(d);
                 return d.data.name + ": " + d.data.count +" times";
             },
             value: "count",
-            inner: "drilldown"
+            inner: "drilldown",
+            transitionDuration: 300
         };
         var hotListPie = new psd3.Pie(config);
 
