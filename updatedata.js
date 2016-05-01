@@ -17,17 +17,19 @@ function updateData() {
     fetchDataHelper(function(data, lastupdatetime) {
         $("#lastupdatetime").text(lastupdatetime);
         console.log(lastupdatetime);
+
+
         data.cpu = data.cpu.map(function(val) {
-            return [Date.parse(val[0]), val[1]];
+            return [parseInt(val[0]) * 1000, val[1]];
         });
         cpuChart.series[0].setData(data.cpu);
 
         data.mem.used = data.mem.used.map(function(val) {
-            return [Date.parse(val[0]), val[1]];
+            return [parseInt(val[0]) * 1000, val[1]];
         });
         memChart.series[0].setData(data.mem.used);
         data.mem.realUsed = data.mem.realUsed.map(function(val) {
-            return [Date.parse(val[0]), val[1]];
+            return [parseInt(val[0]) * 1000, val[1]];
         });
         memChart.series[1].setData(data.mem.realUsed);
 

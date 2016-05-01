@@ -276,7 +276,7 @@ using namespace std;
 string to_string(const chrono::system_clock::time_point &tp)
 {
     std::time_t tt =  chrono::system_clock::to_time_t(tp);
-    string tmp = ctime(&tt);
+    string tmp = std::to_string(tt);
     while(!tmp.empty() && (isblank(*tmp.rbegin()) || 
                     *tmp.rbegin() == '\n'))
         tmp.erase(tmp.size() - 1);
