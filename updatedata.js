@@ -53,6 +53,14 @@ function updateData() {
             inner: "drilldown",
             transitionDuration: 300
         };
+        data.nginx.data = data.nginx.data.map(function(val) {
+            return {
+                "method": val.method,
+                "path": val.path,
+                "status": val.status,
+                "time": new Date(parseInt(val.time) * 1000)
+            };
+        });
         var hotListPie = new psd3.Pie(config);
 
              var nginxloglist = new List("nginxlog-content", { item: "nginxlog-item", valueNames:
