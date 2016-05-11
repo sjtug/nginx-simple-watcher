@@ -13,7 +13,7 @@ g++ -std=c++14 -O2 watcher.cpp -o watcher -pthread
 
 ## Usage
 ```
-./watcher nginx_access_log_path sleep_second output_json_path
+./watcher nginx_access_log_path sleep_second serve_content_root output_json_path
 ```
 
 Then copy `status.html`, `updatedata.js`, `status.css`, `psd3.min.css`, `psd3.min.js` to the same directory as the json's.

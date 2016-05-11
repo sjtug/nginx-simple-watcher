@@ -3,6 +3,7 @@
 #include <cctype>
 #include <algorithm>
 #include <sys/types.h>
+#include <sys/statvfs.h>
 #include <sys/sysinfo.h>
 #include <unistd.h>
 #include <cstdio>
@@ -122,6 +123,37 @@ namespace Infos
         }
     };
 
+    struct DiskSpaceInfo
+    {
+        // sizes are in bytes. Caution that total != used + avail
+        std::size_t total, used, avail;
+    };
+
+    class DiskSpaceGetter
+    {
+        private:
+            std::string _path;
+
+        public:
+            explicit DiskSpaceGetter(const std::string &path):
+                _path(path)
+            {
+            }
+
+            DiskSpaceInfo getDiskSpace()
+            {
+                struct statvfs stat; // c struct in posix
+                DiskSpaceInfo result;
+                int statres = statvfs(_path.c_str(), &stat);
+                if (statres == -1)
+                    return {};
+                result.total = stat.f_frsize * stat.f_blocks;
+                result.used = result.total - stat.f_bsize * stat.f_bfree;
+                result.avail = stat.f_bsize * stat.f_bavail;
+                return result;
+            }
+    };
+
     class NginxLogInfo
     {
         private:
@@ -224,6 +256,8 @@ class Status
 
         std::map<std::string, long long> nginxDirInfo;
 
+        Infos::DiskSpaceInfo diskSpace;
+
         void updateDirInfoFromItem(const NginxLogEntry &e)
         {
             if (e.path[0]=='/' && (e.status == 200 || e.status == 304))
@@ -256,6 +290,11 @@ class Status
                 for (const auto &item: nginxInfos)
                     updateDirInfoFromItem(item.second);
             }
+        }
+
+        void updateDiskSpace(const Infos::DiskSpaceInfo& ds)
+        {
+            diskSpace = ds;
         }
 
         std::string stat()
@@ -352,6 +391,13 @@ void printJSON(std::ofstream& of, const Status& sta)
             }
         }
     }
+
+    j["diskSpace"] = {
+        { "total", sta.diskSpace.total },
+        { "used", sta.diskSpace.used },
+        { "available", sta.diskSpace.avail },
+    };
+
     of << j.dump(4);
 }
 
@@ -362,11 +408,11 @@ inline std::string currentTime()
 
 int main(int argc, char* argv[])
 {
-    if (argc != 4)
+    if (argc != 5)
     {
         cout << R"USAGE(
         USAGE:
-            watcher nginx_log_path sleep_second output_json_path
+            watcher nginx_log_path sleep_second serve_content_root output_json_path
 
         This is a free software. lz96@foxmail.com)USAGE" << endl;
             return 0;
@@ -375,6 +421,7 @@ int main(int argc, char* argv[])
     Infos::CPUInfoGetter cg;
     Infos::NginxLogInfo nl(argv[1]);
     NginxLogEntryParser np;
+    Infos::DiskSpaceGetter dg(argv[3]);
     Status s;
     for (long long cnt = 0;;++cnt)
     {
@@ -385,7 +432,8 @@ int main(int argc, char* argv[])
         auto newEntrys = nl.getIncrLines();
         for (const auto & item :newEntrys)
             s.checkAndAddNginxInfos(np.parse(item));
-        std::ofstream of(argv[3]);
+        s.updateDiskSpace(dg.getDiskSpace());
+        std::ofstream of(argv[4]);
         printJSON(of, s);
         of.flush();
         of.close();

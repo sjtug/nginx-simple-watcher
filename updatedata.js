@@ -33,6 +33,9 @@ function updateData() {
         });
         memChart.series[1].setData(data.mem.realUsed);
 
+        $("#diskspaceused").text((data.diskSpace.used / 1073741824).toFixed(2));
+        $("#diskspaceavail").text((data.diskSpace.available / 1073741824).toFixed(2));
+
         $("#hotdir-content").html("");
         var config = {
             containerId : "hotdir-content",
