@@ -1,4 +1,5 @@
-#Nginx-Simple-Watcher
+#Nginx-Simple-Watcher ![test status](https://travis-ci.org/sjtug/nginx-simple-watcher.svg)
+
 A zero-extra-dependency C++14 nginx server watcher providing CPU usage, mem usage, latest nginx logs and hottest directories, all in JSON format.
 
 A simple static web frontend is also provided.
