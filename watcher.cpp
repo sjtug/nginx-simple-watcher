@@ -330,6 +330,7 @@ void printJSON(std::ofstream& of, const Status& sta)
         for (size_t i=0; i<item.first.size(); ++i)
         {
             if (item.first[i] == '/')
+            {
                 if (i != item.first.size() - 1)
                 {
                     auto it = std::find_if(cur->begin(), 
@@ -342,6 +343,7 @@ void printJSON(std::ofstream& of, const Status& sta)
                     cur = &((*it)["drilldown"]);
                     laststart = i;
                 }
+            }
             else
             {
                 std::string name = item.first.substr(laststart + 1);
