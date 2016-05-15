@@ -83,22 +83,21 @@ namespace Infos
 
         public:
             CPUInfoGetter(){
-                FILE* file = fopen("/proc/stat", "r");
-                fscanf(file, "cpu %llu %llu %llu %llu", &lastTotalUser, &lastTotalUserLow,
-                            &lastTotalSys, &lastTotalIdle);
-                fclose(file);
+                std::ifstream is("/proc/stat");
+                std::string dummy_cpu;
+                is >> dummy_cpu;
+                is >> lastTotalUser >> lastTotalUserLow >> lastTotalSys >> lastTotalIdle;
             }
 
             double getCurrentValue(){
                 double percent;
-                FILE* file;
                 unsigned long long totalUser, totalUserLow, totalSys, totalIdle, total;
                 using namespace std::chrono;
                 std::this_thread::sleep_for(500ms);
-                file = fopen("/proc/stat", "r");
-                fscanf(file, "cpu %llu %llu %llu %llu", &totalUser, &totalUserLow,
-                            &totalSys, &totalIdle);
-                fclose(file);
+                std::string dummy_cpu;
+                std::ifstream is("/proc/stat");
+                is >> dummy_cpu;
+                is >> totalUser >> totalUserLow >> totalSys >> totalIdle;
 
                 if (totalUser < lastTotalUser || totalUserLow < lastTotalUserLow ||
                             totalSys < lastTotalSys || totalIdle < lastTotalIdle){
@@ -382,7 +381,7 @@ int main(int argc, char* argv[])
     {
         cout << "[" << currentTime() << "]" <<
             "Iteration " << cnt << "  Begin" << endl;
-        if (!isnan(cg.getCurrentValue())) s.checkAndAddCPU(cg.getCurrentValue());
+        if (!std::isnan(cg.getCurrentValue())) s.checkAndAddCPU(cg.getCurrentValue());
         s.checkAndAddMem(mg.getMemInfo());
         auto newEntrys = nl.getIncrLines();
         for (const auto & item :newEntrys)
