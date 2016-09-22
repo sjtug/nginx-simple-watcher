@@ -57,11 +57,14 @@
                 transitionDuration: 300
             };
             data.nginx.data = data.nginx.data.map(function(val) {
+                var tzoffset = (new Date()).getTimezoneOffset() * 60000; // offset in milliseconds
+                var iso = (new Date(val.time * 1000 - tzoffset)).toISOString().slice(0,-1);
+                var time = iso.slice(0, 10) + " " + iso.slice(11, 19);
                 return {
                     "method": val.method,
                     "path": val.path,
                     "status": val.status,
-                    "time": new Date(parseInt(val.time) * 1000)
+                    "time": time
                 };
             });
             var hotListPie = new psd3.Pie(config);
