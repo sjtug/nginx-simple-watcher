@@ -16,6 +16,7 @@
 #include <vector>
 #include <map>
 #include <regex>
+#include <stdexcept>
 #include <cmath>
 #include <iomanip>
 #include <sstream>
@@ -192,6 +193,14 @@ struct NginxLogEntry
     std::string type;
 };
 
+class RegexParseException: public std::runtime_error
+{
+    public:
+        RegexParseException(const std::string &o):
+            std::runtime_error(std::string("Failed to match Regex! Original: ") + o)
+        {}
+};
+
 
 class NginxLogEntryParser
 {
@@ -220,8 +229,10 @@ class NginxLogEntryParser
 
 
         } else 
-            std::cout << "Not found!" << std::endl;
-        return NginxLogEntry();
+        {
+            throw RegexParseException(s);
+        }
+
     }
 };
 
@@ -432,7 +443,15 @@ int main(int argc, char* argv[])
         s.checkAndAddMem(mg.getMemInfo());
         auto newEntrys = nl.getIncrLines();
         for (const auto & item :newEntrys)
-            s.checkAndAddNginxInfos(np.parse(item));
+        {
+            try
+            {
+                s.checkAndAddNginxInfos(np.parse(item));
+            } catch (const RegexParseException& e)
+            {
+                std::cerr << e.what() << std::endl;
+            }
+        }
         s.updateDiskSpace(dg.getDiskSpace());
         std::ofstream of(argv[4]);
         printJSON(of, s);
